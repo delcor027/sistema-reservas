@@ -4,16 +4,14 @@ from app.models.rooms import Room
 from bson.objectid import ObjectId
 from typing import List, Optional
 from app.services.room import validate_room_data
+from app.factories.room_factory import RoomFactory
+from app.builders.room_filter_builder import RoomFilterBuilder
 
 router = APIRouter()
 
 @router.post("/rooms", status_code=201)
-async def create_room(room: Room):
-    try:
-        validate_room_data(room)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
+async def create_room(name: str, capacity: int, resources: List[str], status: str = "A"):
+    room = RoomFactory.create(name=name, capacity=capacity, resources=resources, status=status)
     room_dict = room.model_dump()
     result = await rooms_collection.insert_one(room_dict)
     return {"id": str(result.inserted_id)}
@@ -43,15 +41,14 @@ async def delete_room(room_id: str):
 
 @router.get("/rooms", response_model=List[Room])
 async def get_rooms(
-    date: Optional[str] = Query(None),
     capacity: Optional[int] = Query(None),
     resources: Optional[List[str]] = Query(None)
 ):
-    query = {}
-    if capacity:
-        query["capacity"] = {"$gte": capacity}
-    if resources:
-        query["resources"] = {"$all": resources}
-
+    query = (
+        RoomFilterBuilder()
+        .filter_by_capacity(capacity)
+        .filter_by_resources(resources)
+        .build()
+    )
     rooms = await rooms_collection.find(query).to_list(length=100)
     return rooms
