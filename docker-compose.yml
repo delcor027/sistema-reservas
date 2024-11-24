@@ -14,7 +14,7 @@ services:
       - PYTHONUNBUFFERED=1
 
   mongodb:
-    image: mongo:latest
+    image: bitnami/mongodb:latest
     container_name: sistema_reservas_mongodb
     ports:
       - "27017:27017"

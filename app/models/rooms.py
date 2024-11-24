@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 class Room(BaseModel):
     name: str
     capacity: int
     resources: List[str]
-    status: str = "A"  # Ativa por padrão
+    status: Optional[str] = "A"

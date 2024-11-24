@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from app.database import reservations_collection
 from app.models.reservations import Reservation
 from bson.objectid import ObjectId
@@ -15,9 +15,20 @@ async def get_reservations(user: str):
     return reservations
 
 @router.post("/reservations", status_code=201)
-async def create_reservation(user: str, room_id: str, start_time: datetime, end_time: datetime):
-    reservation = ReservationFactory.create(user=user, room_id=room_id, start_time=start_time, end_time=end_time)
-    reservation_dict = reservation.model_dump()
+async def create_reservation(reservation: Reservation = Body(...)):
+    # Checar conflitos de horários
+    conflict = await check_schedule_conflict(reservation)
+    if conflict:
+        raise HTTPException(status_code=400, detail="Conflito de horário com outra reserva")
+
+    # Criar a reserva usando o Factory Pattern
+    reservation_instance = ReservationFactory.create(
+        user=reservation.user,
+        room_id=reservation.room_id,
+        start_time=reservation.start_time,
+        end_time=reservation.end_time
+    )
+    reservation_dict = reservation_instance.model_dump()
     result = await reservations_collection.insert_one(reservation_dict)
     return {"id": str(result.inserted_id)}
 

@@ -1,6 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 
-MONGO_DETAILS = "mongodb://localhost:27017"
+# Alterado para o nome do serviço MongoDB no Docker Compose
+MONGO_DETAILS = "mongodb://sistema_reservas_mongodb:27017"
 
 client = AsyncIOMotorClient(MONGO_DETAILS)
 database = client["sistema_reservas"]
